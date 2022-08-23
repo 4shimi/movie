@@ -10,11 +10,13 @@ function App() {
   const [offset, setOffset] = useState(0);
   const [hasNext, setHasNext] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const sortedItems = items.sort((a, b) => b[order] - a[order]);
+  const [loadingError, setLoadingError] = useState(null);
+  const [search, setSearch] = useState("");
 
   const handleNewestClick = () => setOrder("createdAt");
   const handleBestClick = () => setOrder("rating");
+
+  const sortedItems = items.sort((a, b) => b[order] - a[order]);
 
   const handleDelete = (id) => {
     const nextItems = items.filter((item) => item.id !== id);
@@ -25,9 +27,10 @@ function App() {
     let result;
     try {
       setIsLoading(true);
+      setLoadingError(null);
       result = await getReviews(options);
     } catch (error) {
-      console.error(error);
+      setLoadingError(error);
       return;
     } finally {
       setIsLoading(false);
@@ -44,25 +47,33 @@ function App() {
   };
 
   const handleLoadMore = () => {
-    handleLoad({ order, offset, limit: LIMIT });
+    handleLoad({ order, offset, search, limit: LIMIT });
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setSearch(e.target["search"].value);
   };
 
   useEffect(() => {
-    handleLoad({ order, offset: 0, limit: LIMIT });
-  }, [order]);
+    handleLoad({ order, search });
+  }, [order, search]);
 
   return (
     <div>
-      <div>
-        <button onClick={handleNewestClick}>최신순</button>
-        <button onClick={handleBestClick}>평점순</button>
-      </div>
+      <form onSubmit={handleSearchSubmit}>
+        <input name="search" />
+        <button type="submit">검색</button>
+      </form>
+      <button onClick={handleNewestClick}>최신순</button>
+      <button onClick={handleBestClick}>평점순</button>
       <ReviewList items={sortedItems} onDelete={handleDelete} />
       {hasNext && (
         <button disabled={isLoading} onClick={handleLoadMore}>
           더보기
         </button>
       )}
+      {loadingError?.message && <span>{loadingError.message}</span>}
     </div>
   );
 }

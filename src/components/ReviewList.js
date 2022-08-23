@@ -28,7 +28,7 @@ function ReviewListItem({ item, onDelete }) {
 
 function ReviewList({ items, onDelete }) {
   return (
-    <ul>
+    <ul className="ReviewList">
       {items.map((item) => {
         return (
           <li key={item.id}>
